@@ -10,6 +10,7 @@ and add it to PROVIDERS. Providers are tried in order until one succeeds.
 
 from dataclasses import dataclass, field
 import ipaddress
+import math
 
 import requests
 
@@ -205,3 +206,60 @@ def detect_report(version, session=requests, timeout=DEFAULT_TIMEOUT):
             ],
         )
     return build_report(label, address, session, timeout)
+
+
+# Fields shown in the provider cross-check. Latitude and longitude are compared
+# as a distance instead, because exact coordinates almost never match.
+COMPARED_FIELDS = ("isp", "asn", "network", "city", "region", "country_code", "timezone")
+
+
+def _distance_km(first, second):
+    """Return the great-circle distance between two detail records, if known."""
+    try:
+        lat1, lon1 = math.radians(first["latitude"]), math.radians(first["longitude"])
+        lat2, lon2 = math.radians(second["latitude"]), math.radians(second["longitude"])
+    except (KeyError, TypeError):
+        return None
+    # Haversine formula, using the Earth's mean radius of 6371 km.
+    a = (
+        math.sin((lat2 - lat1) / 2) ** 2
+        + math.cos(lat1) * math.cos(lat2) * math.sin((lon2 - lon1) / 2) ** 2
+    )
+    return round(2 * 6371 * math.asin(math.sqrt(a)))
+
+
+def compare_providers(address, session=requests, timeout=DEFAULT_TIMEOUT):
+    """Ask every provider about an address and report where they disagree.
+
+    Each row's status is "match", "differs", or "partial" (fewer than two
+    providers returned a value). Unlike get_ip_details(), this always calls
+    every provider, so it uses more of the free API quota.
+    """
+    address = str(ipaddress.ip_address(address))
+    results = {}
+    failed = []
+    for name, url_template, parser in PROVIDERS:
+        try:
+            data = _get_json(url_template.format(ip=address), session, timeout)
+            results[name] = parser(data)
+        except LookupFailed:
+            failed.append(name)
+
+    rows = []
+    for key in COMPARED_FIELDS:
+        values = {name: details.get(key) for name, details in results.items()}
+        present = {str(value).strip().casefold() for value in values.values() if value}
+        answered = sum(1 for value in values.values() if value)
+        if answered < 2:
+            status = "partial"
+        else:
+            status = "match" if len(present) == 1 else "differs"
+        rows.append({"field": key, "values": values, "status": status})
+
+    records = list(results.values())
+    return {
+        "providers": list(results),
+        "failed": failed,
+        "rows": rows,
+        "distance_km": _distance_km(records[0], records[1]) if len(records) >= 2 else None,
+    }
