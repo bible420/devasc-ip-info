@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Address Bench</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <main class="chassis">
+    <header class="faceplate">
+      <div class="brand">
+        <h1>Address Bench</h1>
+        <p>Public IPv4/IPv6 addressing for network technicians</p>
+      </div>
+      <form id="lookup-form" class="lookup" autocomplete="off">
+        <label for="lookup-input">Look up an address</label>
+        <div class="lookup-row">
+          <input id="lookup-input" type="text" placeholder="8.8.8.8 or 2001:4860:4860::8888" spellcheck="false">
+          <button type="submit">Look up</button>
+        </div>
+        <p id="lookup-error" class="field-error" role="alert"></p>
+      </form>
+    </header>
+
+    <section class="ports" aria-label="Connections">
+      <button class="port" id="port-4" type="button" data-port="4" aria-pressed="true">
+        <span class="led" aria-hidden="true"></span>
+        <span class="port-name">Public IPv4</span>
+        <span class="port-state">Checking</span>
+      </button>
+      <button class="port" id="port-6" type="button" data-port="6" aria-pressed="false">
+        <span class="led" aria-hidden="true"></span>
+        <span class="port-name">Public IPv6</span>
+        <span class="port-state">Checking</span>
+      </button>
+      <button class="port" id="port-lookup" type="button" data-port="lookup" aria-pressed="false" hidden>
+        <span class="led" aria-hidden="true"></span>
+        <span class="port-name">Lookup</span>
+        <span class="port-state"></span>
+      </button>
+      <label class="switch">
+        <input id="mask-toggle" type="checkbox" checked>
+        <span>Hide my address</span>
+      </label>
+    </section>
+
+    <section class="unit readout">
+      <div>
+        <p class="silk">Address</p>
+        <p id="address" class="address" aria-live="polite">Checking</p>
+        <p id="summary" class="summary"></p>
+      </div>
+      <button id="copy-ticket" class="ghost" type="button" disabled>Copy for ticket</button>
+    </section>
+    <p id="notes" class="notes" role="status"></p>
+
+    <section class="unit" id="anatomy-unit">
+      <div class="unit-head">
+        <h2>Address anatomy</h2>
+        <ul id="legend" class="legend"></ul>
+      </div>
+      <div id="bits" class="bits" role="img"></div>
+    </section>
+
+    <div class="columns">
+      <section class="unit">
+        <div class="unit-head"><h2>Details</h2></div>
+        <dl id="details" class="details"></dl>
+      </section>
+
+      <section class="unit">
+        <div class="unit-head">
+          <h2>Provider cross-check</h2>
+          <button id="crosscheck" class="ghost" type="button" disabled>Run check</button>
+        </div>
+        <p id="crosscheck-intro" class="muted">Ask both providers about this address and see where they disagree. This uses extra API quota, so it only runs when you ask.</p>
+        <p id="crosscheck-distance" class="distance" hidden></p>
+        <div class="table-wrap">
+          <table id="crosscheck-table" hidden>
+            <thead><tr id="crosscheck-head"></tr></thead>
+            <tbody id="crosscheck-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

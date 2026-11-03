@@ -45,6 +45,37 @@ def mask_address(address):
     return ":".join(ip.exploded.split(":")[:2] + ["xxxx"] * 6)
 
 
+def address_bits(address, masked=False):
+    """Return an address as binary groups: 8-bit octets or 16-bit hextets.
+
+    When masked, "x" replaces each bit that mask_address() would hide, so the
+    web page can't reveal a hidden address through its bit view.
+    """
+    ip = ipaddress.ip_address(address)
+    width, group_size, visible = (32, 8, 16) if ip.version == 4 else (128, 16, 32)
+    bits = format(int(ip), f"0{width}b")
+    if masked:
+        bits = bits[:visible] + "x" * (width - visible)
+    return [bits[start : start + group_size] for start in range(0, width, group_size)]
+
+
+def mask_comparison(comparison):
+    """Return a copy of a provider comparison with identifying values hidden.
+
+    Each row's status and the distance stay, since they don't reveal the location.
+    """
+    rows = []
+    for row in comparison["rows"]:
+        values = row["values"]
+        if row["field"] in MASKED_DETAILS:
+            values = {
+                name: "(masked)" if value is not None else None
+                for name, value in values.items()
+            }
+        rows.append({**row, "values": values})
+    return {**comparison, "rows": rows}
+
+
 def mask_report(report):
     """Return a copy of a report with identifying values hidden."""
     if not report.available:
