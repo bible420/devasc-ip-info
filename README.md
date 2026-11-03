@@ -1,6 +1,6 @@
 # IPv4/IPv6 Address Information App
 
-A Python command-line prototype that gives network technicians a computer's public IP addressing information. Built for DEVASC Project Activity 3, Option 2.
+A Python command-line tool and local web dashboard that give network technicians a computer's public IP addressing information. Built for DEVASC Project Activity 3, Option 2.
 
 It detects the public IPv4 and IPv6 addresses separately, then shows the ISP, ASN, network prefix, approximate location, and time zone. It can also look up any other IP address.
 
@@ -73,14 +73,34 @@ Lookup: IPv4
 +--------------------+----------------------+
 ```
 
+## Web dashboard
+
+Address Bench is a web dashboard, styled like the front panel of a network device, that runs on your own computer.
+
+```bash
+python -m ipinfo_app.web
+```
+
+This opens `http://127.0.0.1:5000` in your browser. Press Ctrl+C in the terminal to stop it, or add `--port 8080` if port 5000 is in use.
+
+| Panel | What it shows |
+| --- | --- |
+| Connection lights | Whether public IPv4 and IPv6 are working |
+| Address anatomy | Every bit of the address as a light, split into network and host bits at the prefix boundary |
+| Provider cross-check | Where the two APIs disagree about an address, and how far apart their locations are |
+| Copy for ticket | The current results as plain text, ready to paste into a support ticket |
+
+**Hide my address** is on by default for your own address. It doesn't apply to addresses you type into the lookup box.
+
 ## How it works
 
 ```text
-__main__.py  Reads arguments, chooses addresses, sets the exit code
+__main__.py  Command-line tool: reads arguments, chooses addresses, sets the exit code
+web.py       Web dashboard: serves the page in templates/ and static/, and the JSON routes
     |
 api.py       Calls the REST APIs and builds an IPReport for each address
     |
-display.py   Turns each IPReport into a table or JSON, and applies --mask
+display.py   Formats reports, applies masking, and builds the bit view
 ```
 
 | API | Used for | Note |
@@ -102,6 +122,7 @@ The code handles these cases on purpose:
 - **Location is approximate.** During testing, the two providers placed 8.8.8.8 in different cities (Mountain View and San Jose). Do not use it to find a physical site.
 - **Lookups are shared with third parties.** Detection and lookups send addresses to the APIs above, so check that this is acceptable before looking up sensitive addresses.
 - **Masked output is not anonymous.** `--mask` hides the end of the address and the detailed location, but leaves the first part of the address, ISP, ASN, country, and time zone visible.
+- **The cross-check uses more quota.** It calls every provider, so it only runs when you click the button.
 - **Free APIs can change.** Rate limits and response formats are controlled by the providers.
 
 ## Testing
@@ -125,6 +146,7 @@ python -m ipinfo_app -l 8.8.8.8 -l 2001:4860:4860::8888 -l 10.0.0.1
    - **New API provider:** add a parser and a `PROVIDERS` entry in `api.py`. The parser must return every key in `DETAIL_FIELDS`.
    - **New table row:** add it to `ROWS` in `display.py`. If it could identify someone, add it to `mask_report` too.
    - **New option:** add it in `parse_args` in `__main__.py`.
+   - **New dashboard feature:** add a route in `web.py` and its display code in `static/app.js`. Apply masking on the server, and write API data to the page as text, not HTML.
 4. Run the tests and live checks above.
 5. Open a pull request, have a teammate review it, then merge it.
 

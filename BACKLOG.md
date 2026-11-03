@@ -15,4 +15,4 @@ Enhancements for a future revision, ready for Project Activity 4. Priority and e
 | 9 | Short-lived result cache | Reduces API use during repeated checks | Low | Medium |
 | 10 | Watch mode that reports address changes | Helps troubleshoot dynamic or changing addresses | Low | Medium |
 | 11 | Installable command (`ipinfo`) | Removes the need to run from the project folder | Low | Small |
-| 12 | Web dashboard | Helps technicians who prefer a browser over a terminal | Low | Large |
+| 12 | Shared, hosted version of the web dashboard with sign-in | Lets a whole team use it from a browser, without installing it | Low | Large |
