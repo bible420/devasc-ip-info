@@ -15,6 +15,7 @@ It detects the public IPv4 and IPv6 addresses separately, then shows the ISP, AS
 | Address analysis | Included in the results | Shows scope, expanded form, and reverse DNS name, even offline |
 | Provider fallback | Automatic | Keeps working when one free API is rate limited or down |
 | JSON output | `--json` | Lets scripts and other tools use the results |
+| Saved reports | `-o report.json` | Attaches a timestamped report to a support ticket |
 | Masked output | `--mask` | Hides identifying values in demos and screenshots |
 | Readable tables | Default, or `--no-color` | Highlights the address, and removes color when output is redirected |
 
@@ -40,14 +41,17 @@ python -m ipinfo_app -4                    IPv4 only
 python -m ipinfo_app -6                    IPv6 only
 python -m ipinfo_app -l 8.8.8.8 -l ::1     Look up specific addresses
 python -m ipinfo_app -l 8.8.8.8 --json     JSON output
+python -m ipinfo_app -o report.json        Also save a JSON report to a file
 python -m ipinfo_app --help                All options
 ```
+
+`-o` saves the same results as a JSON file with the time and app version, and replaces any existing file with that name. With `--mask`, the saved report is masked too.
 
 | Exit code | Meaning |
 | --- | --- |
 | 0 | At least one address was found |
 | 1 | No address was found |
-| 2 | Invalid arguments |
+| 2 | Invalid arguments, or the report file couldn't be saved |
 
 ### Sample output
 

@@ -4,6 +4,8 @@ from dataclasses import asdict, replace
 import ipaddress
 import json
 
+from . import __version__
+
 GREEN, YELLOW, CYAN, BOLD, RESET = (
     "\033[32m",
     "\033[33m",
@@ -134,3 +136,15 @@ def render_table(report, color=True):
 def render_json(reports):
     """Return all reports as JSON, for use by scripts."""
     return json.dumps([asdict(report) for report in reports], indent=2)
+
+
+def render_report_file(reports, generated_at):
+    """Return a saved report: the reports plus when and by which version they were made."""
+    return json.dumps(
+        {
+            "generated_at": generated_at,
+            "app_version": __version__,
+            "reports": [asdict(report) for report in reports],
+        },
+        indent=2,
+    )
