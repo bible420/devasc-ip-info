@@ -1,13 +1,20 @@
 # Product Backlog
 
-Enhancements for a future revision, ready for Project Activity 4. Priority and effort are initial estimates for the team to review.
+Enhancements for future revisions. Priority and effort are estimates for the team to review.
+
+## Done in Project Activity 4
+
+| # | Enhancement | Where |
+| --- | --- | --- |
+| 1 | Automated tests on every pull request (GitHub Actions) | `.github/workflows/ci.yml` |
+| 2 | Scheduled live check of each API | `.github/workflows/live-check.yml`, `tests/test_live.py` |
+| 4 | Save a report to a file (`--output report.json`) | `__main__.py`, `display.py` |
+
+## Still to do
 
 | # | Enhancement | Value to technicians | Priority | Effort |
 | --- | --- | --- | --- | --- |
-| 1 | Automated tests on every pull request (GitHub Actions) | Catches regressions before merge | High | Small |
-| 2 | Scheduled live check of each API | Detects provider response changes that the offline tests can't | High | Small |
 | 3 | Show the computer's local IP addresses, gateway, and DNS servers | Puts local and public addressing in one view | High | Medium |
-| 4 | Save a report to a file (`--output report.json`) | Lets a report be attached to a support ticket | Medium | Small |
 | 5 | Look up addresses from a file (`--file ips.txt`) | Handles many addresses from a log | Medium | Small |
 | 6 | CSV output | Opens results in a spreadsheet | Medium | Small |
 | 7 | Reverse DNS query (actual hostname for an address) | Identifies the host, not only the lookup name | Medium | Small |
