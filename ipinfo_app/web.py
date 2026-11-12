@@ -10,6 +10,7 @@ to localhost, so other websites and devices can't read a technician's results.
 
 import argparse
 from dataclasses import asdict
+from datetime import datetime, timezone
 import ipaddress
 from pathlib import Path
 import webbrowser
@@ -26,7 +27,7 @@ from .api import (
     detect_report,
     get_public_ip,
 )
-from .display import address_bits, mask_comparison, mask_report
+from .display import address_bits, mask_comparison, mask_report, render_report_file
 
 ALLOWED_HOSTS = {"127.0.0.1", "localhost"}
 
@@ -96,11 +97,36 @@ def create_app(session=requests, timeout=DEFAULT_TIMEOUT):
         version = valid_version_argument()
         return jsonify(report_payload(detect_report(version, session, timeout), wants_mask()))
 
+    def lookup_report(address):
+        label = f"Lookup: IPv{ipaddress.ip_address(address).version}"
+        return build_report(label, address, session, timeout)
+
     @app.get("/api/lookup")
     def lookup():
-        address = valid_ip_argument()
-        label = f"Lookup: IPv{ipaddress.ip_address(address).version}"
-        return jsonify(report_payload(build_report(label, address, session, timeout), wants_mask()))
+        return jsonify(report_payload(lookup_report(valid_ip_argument()), wants_mask()))
+
+    @app.get("/api/report")
+    def download_report():
+        """Download a report as the same JSON file that the --output option saves.
+
+        Like the cross-check, the page sends the IP version for this computer's
+        own address (it may only hold a masked copy), and the server detects it again.
+        """
+        if "ip" in request.args:
+            report = lookup_report(valid_ip_argument())
+        else:
+            report = detect_report(valid_version_argument(), session, timeout)
+        if wants_mask():
+            report = mask_report(report)
+        generated_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        response = app.response_class(
+            render_report_file([report], generated_at) + "\n", mimetype="application/json"
+        )
+        stamp = generated_at[:19].replace("-", "").replace(":", "")  # e.g. 20261112T105733
+        response.headers["Content-Disposition"] = (
+            f'attachment; filename="address-bench-report-{stamp}.json"'
+        )
+        return response
 
     @app.get("/api/crosscheck")
     def crosscheck():

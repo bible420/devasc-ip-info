@@ -3,7 +3,7 @@
 import json
 import unittest
 
-from ipinfo_app import api, display
+from ipinfo_app import __version__, api, display
 from ipinfo_app.web import create_app
 from tests.test_api import IPAPI_RESPONSE, IPWHO_RESPONSE, FakeSession
 
@@ -155,6 +155,31 @@ class RouteTests(unittest.TestCase):
             with self.subTest(host=host):
                 self.assertEqual(client.get("/", headers={"Host": host}).status_code, 200)
 
+    def test_report_download_is_a_json_attachment(self):
+        client, _ = client_for(ROUTES)
+        response = client.get("/api/report?ip=8.8.8.8")
+        self.assertEqual(response.status_code, 200)
+        self.assertRegex(
+            response.headers["Content-Disposition"],
+            r'^attachment; filename="address-bench-report-\d{8}T\d{6}\.json"$',
+        )
+        data = json.loads(response.data)
+        self.assertEqual(data["app_version"], __version__)
+        self.assertEqual(data["reports"][0]["address"], "8.8.8.8")
+        self.assertIn("T", data["generated_at"])
+
+    def test_report_download_for_own_address(self):
+        client, _ = client_for(ROUTES)
+        data = json.loads(client.get("/api/report?version=4").data)
+        self.assertEqual(data["reports"][0]["address"], OWN_IP)
+
+    def test_invalid_report_download_makes_no_requests(self):
+        client, session = client_for(ROUTES)
+        for query in ("ip=nope", "version=5", ""):
+            with self.subTest(query=query):
+                self.assertEqual(client.get(f"/api/report?{query}").status_code, 400)
+        self.assertEqual(session.urls, [])
+
     def test_security_headers(self):
         client, _ = client_for(ROUTES)
         headers = client.get("/").headers
@@ -188,6 +213,12 @@ class MaskRouteTests(unittest.TestCase):
         city = next(row for row in data["rows"] if row["field"] == "city")
         self.assertEqual(city["status"], "differs")
         self.assertEqual(set(city["values"].values()), {"(masked)"})
+
+    def test_report_download(self):
+        client, _ = client_for(ROUTES)
+        data = json.loads(client.get("/api/report?version=4&mask=1").data)
+        self.assert_no_secrets(data)
+        self.assertEqual(data["reports"][0]["address"], "9.9.xxx.xxx")
 
 
 if __name__ == "__main__":
