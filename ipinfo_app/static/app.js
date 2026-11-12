@@ -150,6 +150,7 @@ function render() {
   const report = payload && payload.report;
 
   $("copy-ticket").disabled = !report || !report.available;
+  $("save-report").disabled = !report || !report.available;
   $("crosscheck").disabled = !report || !report.available || report.analysis.scope !== "global";
   $("details").replaceChildren();
   renderBits(payload);
@@ -317,6 +318,18 @@ async function copyTicket() {
   }, 1500);
 }
 
+// ----- Save report -----
+
+// Downloads the same JSON file as the command line's --output option. The
+// server sends it as an attachment, so the browser saves it and stays on the page.
+function saveReport() {
+  const query =
+    state.selected === "lookup"
+      ? `ip=${encodeURIComponent(state.lookupIp)}`
+      : `version=${state.selected}&mask=${isMasked() ? 1 : 0}`;
+  window.location.href = `/api/report?${query}`;
+}
+
 // ----- Start -----
 
 document.querySelectorAll(".port").forEach((port) => {
@@ -325,6 +338,7 @@ document.querySelectorAll(".port").forEach((port) => {
 $("mask-toggle").addEventListener("change", loadAll);
 $("crosscheck").addEventListener("click", runCrosscheck);
 $("copy-ticket").addEventListener("click", copyTicket);
+$("save-report").addEventListener("click", saveReport);
 $("lookup-form").addEventListener("submit", (event) => {
   event.preventDefault();
   const ip = $("lookup-input").value.trim();

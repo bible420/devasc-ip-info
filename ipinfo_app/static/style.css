@@ -188,6 +188,8 @@ button, input { font: inherit; color: inherit; }
 .notes { padding: 0 4px; color: var(--network); }
 .muted { color: var(--muted); }
 
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
 .ghost {
   padding: 8px 14px;
   background: transparent;

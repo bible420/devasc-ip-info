@@ -15,7 +15,7 @@ It detects the public IPv4 and IPv6 addresses separately, then shows the ISP, AS
 | Address analysis | Included in the results | Shows scope, expanded form, and reverse DNS name, even offline |
 | Provider fallback | Automatic | Keeps working when one free API is rate limited or down |
 | JSON output | `--json` | Lets scripts and other tools use the results |
-| Saved reports | `-o report.json` | Attaches a timestamped report to a support ticket |
+| Saved reports | `-o report.json`, or **Save report** on the dashboard | Attaches a timestamped report to a support ticket |
 | Masked output | `--mask` | Hides identifying values in demos and screenshots |
 | Readable tables | Default, or `--no-color` | Highlights the address, and removes color when output is redirected |
 
@@ -93,6 +93,7 @@ This opens `http://127.0.0.1:5000` in your browser. Press Ctrl+C in the terminal
 | Address anatomy | Every bit of the address as a light, split into network and host bits at the prefix boundary |
 | Provider cross-check | Where the two APIs disagree about an address, and how far apart their locations are |
 | Copy for ticket | The current results as plain text, ready to paste into a support ticket |
+| Save report | Downloads the current results as the same JSON file that `-o` saves (masked when Hide my address is on) |
 
 **Hide my address** is on by default for your own address. It doesn't apply to addresses you type into the lookup box.
 
