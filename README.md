@@ -142,7 +142,9 @@ The tests fake all HTTP traffic, so they run offline and use no API quota. They 
 
 ### Live API check
 
-[`tests/test_live.py`](tests/test_live.py) checks that each provider still returns the fields the app needs, using 8.8.8.8 as a known address. It runs every day at 00:00 UTC in GitHub Actions ([`.github/workflows/live-check.yml`](.github/workflows/live-check.yml)), and can also be started from the **Actions** tab. A provider that is only rate limiting is skipped rather than failed.
+[`tests/test_live.py`](tests/test_live.py) checks that each provider still returns the fields the app needs, using 8.8.8.8 as a known address. It runs as the `live-check` job in [`.circleci/config.yml`](.circleci/config.yml), whenever a pipeline is started with the `run-live-check` parameter set to `true`. A provider that is only rate limiting is skipped rather than failed.
+
+To run it every day, add a schedule in CircleCI under **Project Settings > Triggers**: branch `main`, daily at 00:00 UTC, with the pipeline parameter `run-live-check` set to `true`. To run it once, use **Trigger Pipeline** on the project page with the same parameter.
 
 To run it locally:
 

@@ -5,7 +5,14 @@
 #   request can only be merged when both test jobs pass.
 # - After the tests pass on main, the package job saves the app as a
 #   downloadable zip (the delivery step).
+# - A daily scheduled pipeline sets run-live-check, which runs only the live
+#   API tests instead (see "Live API check" in README.md).
 version: 2.1
+
+parameters:
+  run-live-check:
+    type: boolean
+    default: false
 
 jobs:
   tests:
@@ -23,6 +30,22 @@ jobs:
           name: Run unit tests
           command: python -m unittest discover -v
 
+  # The unit tests fake every API response, so only this job notices a
+  # provider renaming or removing a field the app depends on.
+  live-check:
+    docker:
+      - image: cimg/python:3.12
+    environment:
+      RUN_LIVE_TESTS: "1"
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: pip install -r requirements.txt
+      - run:
+          name: Run live API tests
+          command: python -m unittest tests.test_live -v
+
   package:
     docker:
       - image: cimg/python:3.12
@@ -39,6 +62,8 @@ jobs:
 
 workflows:
   test-and-package:
+    when:
+      not: << pipeline.parameters.run-live-check >>
     jobs:
       - tests:
           name: tests-<< matrix.python-version >>
@@ -53,3 +78,8 @@ workflows:
           filters:
             branches:
               only: main
+
+  live-api-check:
+    when: << pipeline.parameters.run-live-check >>
+    jobs:
+      - live-check
