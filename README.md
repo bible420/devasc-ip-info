@@ -142,7 +142,20 @@ GitHub Actions runs these tests automatically on every push and pull request, us
 - **Pull requests:** `main` is protected, so a pull request can only be merged after both test jobs pass and a teammate approves it.
 - **Merges to `main`:** after the tests pass, a `package` job publishes the app as a downloadable build, under **Actions** in the repository.
 
-The tests fake all HTTP traffic, so they run offline and use no API quota. They can't detect a provider changing its response format, so also run these live checks before a release:
+The tests fake all HTTP traffic, so they run offline and use no API quota. They can't detect a provider changing its response format, so a separate set of live tests calls the real APIs.
+
+### Live API check
+
+[`tests/test_live.py`](tests/test_live.py) checks that each provider still returns the fields the app needs, using 8.8.8.8 as a known address. It runs every day at 00:00 UTC in GitHub Actions ([`.github/workflows/live-check.yml`](.github/workflows/live-check.yml)), and can also be started from the **Actions** tab. A provider that is only rate limiting is skipped rather than failed.
+
+To run it locally:
+
+```bash
+RUN_LIVE_TESTS=1 python -m unittest tests.test_live -v        # macOS or Linux
+$env:RUN_LIVE_TESTS="1"; python -m unittest tests.test_live -v  # Windows PowerShell
+```
+
+Before a release, also try the app by hand:
 
 ```bash
 python -m ipinfo_app --mask
