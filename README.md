@@ -137,10 +137,10 @@ python -m unittest discover -v
 
 ### Continuous integration
 
-[CircleCI](https://circleci.com) runs these tests automatically on every push, including pull request branches, using Python 3.10 and 3.12. The pipeline is in [`.circleci/config.yml`](.circleci/config.yml), and its results appear on each commit and pull request in GitHub.
+GitHub Actions runs these tests automatically on every push and pull request, using Python 3.10 and 3.12. The workflow is in [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 
 - **Pull requests:** `main` is protected, so a pull request can only be merged after both test jobs pass and a teammate approves it.
-- **Merges to `main`:** after the tests pass, a `package` job builds the app as `address-bench.zip`, which can be downloaded from the job's **Artifacts** tab in CircleCI.
+- **Merges to `main`:** after the tests pass, a `package` job publishes the app as a downloadable build, under **Actions** in the repository.
 
 The tests fake all HTTP traffic, so they run offline and use no API quota. They can't detect a provider changing its response format, so also run these live checks before a release:
 
@@ -159,7 +159,7 @@ python -m ipinfo_app -l 8.8.8.8 -l 2001:4860:4860::8888 -l 10.0.0.1
    - **New option:** add it in `parse_args` in `__main__.py`.
    - **New dashboard feature:** add a route in `web.py` and its display code in `static/app.js`. Apply masking on the server, and write API data to the page as text, not HTML.
 4. Run the tests and live checks above.
-5. Open a pull request. CircleCI runs the tests automatically, and a teammate reviews it.
+5. Open a pull request. GitHub runs the tests automatically, and a teammate reviews it.
 6. Merge once the tests pass and the review is approved. GitHub blocks the merge until both are done.
 
 Don't commit API keys or unmasked output containing a real public IP. `.env` files are already ignored by git.
