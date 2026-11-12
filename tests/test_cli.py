@@ -3,6 +3,8 @@
 import contextlib
 import io
 import json
+from pathlib import Path
+import tempfile
 import unittest
 from unittest import mock
 
@@ -124,6 +126,58 @@ class CliTests(unittest.TestCase):
             code, _ = self.run_main(["-4", "--no-color"])
         detect.assert_called_once()
         self.assertEqual(code, 0)
+
+
+class SaveReportTests(unittest.TestCase):
+    """--output saves a JSON report. Uses a temporary folder and no network."""
+
+    def setUp(self):
+        folder = tempfile.TemporaryDirectory()
+        self.addCleanup(folder.cleanup)
+        self.folder = Path(folder.name)
+
+    def run_main(self, argv):
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+            code = cli.main(argv)
+        return code, out.getvalue(), err.getvalue()
+
+    def test_saves_report_with_metadata(self):
+        path = self.folder / "report.json"
+        code, _, err = self.run_main(["-l", "10.0.0.1", "--no-color", "-o", str(path)])
+        self.assertEqual(code, 0)
+        self.assertIn("Report saved to", err)
+        data = json.loads(path.read_text(encoding="utf-8"))
+        self.assertEqual(data["reports"][0]["address"], "10.0.0.1")
+        self.assertEqual(data["app_version"], cli.__version__)
+        self.assertIn("T", data["generated_at"])
+
+    def test_saved_report_is_masked_with_mask(self):
+        path = self.folder / "masked.json"
+        with mock.patch.object(cli, "detect_report", return_value=sample_report()):
+            self.run_main(["-4", "--mask", "--no-color", "-o", str(path)])
+        text = path.read_text(encoding="utf-8")
+        for secret in ("203.0.113", "Exampleville", "Example Region"):
+            self.assertNotIn(secret, text)
+        self.assertIn("203.0.xxx.xxx", text)
+
+    def test_json_on_screen_stays_valid(self):
+        path = self.folder / "report.json"
+        _, out, _ = self.run_main(["-l", "10.0.0.1", "--json", "-o", str(path)])
+        self.assertEqual(json.loads(out)[0]["address"], "10.0.0.1")
+
+    def test_replaces_existing_file(self):
+        path = self.folder / "report.json"
+        path.write_text("old", encoding="utf-8")
+        self.run_main(["-l", "10.0.0.1", "--no-color", "-o", str(path)])
+        self.assertNotIn("old", path.read_text(encoding="utf-8"))
+
+    def test_unwritable_path_returns_error(self):
+        path = self.folder / "missing-folder" / "report.json"
+        code, _, err = self.run_main(["-l", "10.0.0.1", "--no-color", "-o", str(path)])
+        self.assertEqual(code, 2)
+        self.assertIn("Could not save the report", err)
+        self.assertFalse(path.exists())
 
 
 if __name__ == "__main__":

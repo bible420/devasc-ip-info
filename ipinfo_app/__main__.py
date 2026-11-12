@@ -1,16 +1,19 @@
 """Command-line entry point: python -m ipinfo_app
 
-Exit codes: 0 = at least one address found, 1 = none found, 2 = bad arguments.
+Exit codes: 0 = at least one address found, 1 = none found,
+2 = bad arguments or the report file could not be saved.
 """
 
 import argparse
+from datetime import datetime, timezone
 import ipaddress
 import os
+from pathlib import Path
 import sys
 
 from . import __version__
 from .api import DEFAULT_TIMEOUT, build_report, detect_report
-from .display import mask_report, render_json, render_table
+from .display import mask_report, render_json, render_report_file, render_table
 
 
 def _ip_argument(value):
@@ -50,6 +53,12 @@ def parse_args(argv=None):
     parser.add_argument("--json", action="store_true", help="print JSON instead of tables")
     parser.add_argument("--mask", action="store_true", help="hide identifying values, for demos")
     parser.add_argument("--no-color", action="store_true", help="disable colored output")
+    parser.add_argument(
+        "-o",
+        "--output",
+        metavar="FILE",
+        help="also save the results as a JSON report, e.g. for a support ticket (replaces FILE)",
+    )
     parser.add_argument(
         "--timeout",
         type=_positive_number,
@@ -93,7 +102,25 @@ def main(argv=None):
             os.system("")  # turns on ANSI color handling in the Windows console
         print("\n\n".join(render_table(report, color) for report in reports))
 
+    if args.output and not save_report(reports, args.output):
+        return 2
     return 0 if any(report.available for report in reports) else 1
+
+
+def save_report(reports, path):
+    """Write the reports to a JSON file. Returns False if the file can't be written.
+
+    Messages go to stderr, so that --json output on stdout stays valid JSON.
+    The reports are saved as shown, so a --mask report is masked in the file too.
+    """
+    generated_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    try:
+        Path(path).write_text(render_report_file(reports, generated_at) + "\n", encoding="utf-8")
+    except OSError as exc:
+        print(f"Could not save the report: {exc}", file=sys.stderr)
+        return False
+    print(f"Report saved to {path}", file=sys.stderr)
+    return True
 
 
 if __name__ == "__main__":
