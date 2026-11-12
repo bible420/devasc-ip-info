@@ -6,8 +6,8 @@ Enhancements for future revisions. Priority and effort are estimates for the tea
 
 | # | Enhancement | Where |
 | --- | --- | --- |
-| 1 | Automated tests on every pull request (CircleCI) | `.circleci/config.yml` |
-| 2 | Scheduled live check of each API | `.circleci/config.yml`, `tests/test_live.py` |
+| 1 | Automated tests on every pull request (GitHub Actions) | `.github/workflows/ci.yml` |
+| 2 | Scheduled live check of each API | `.github/workflows/live-check.yml`, `tests/test_live.py` |
 | 4 | Save a report to a file (`--output report.json`) | `__main__.py`, `display.py` |
 
 ## Still to do
